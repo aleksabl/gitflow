@@ -45,8 +45,8 @@ init() {
 
 usage() {
 	echo "usage: git flow feature [list] [-v]"
-	echo "       git flow feature start [-F] <name> [<base>]"
-	echo "       git flow feature finish [-rFkDS] [<name|nameprefix>]"
+	echo "       git flow feature start [-FM] <name> [<base>]"
+	echo "       git flow feature finish [-rFkDSM] [<name|nameprefix>]"
 	echo "       git flow feature publish <name>"
 	echo "       git flow feature track <name>"
 	echo "       git flow feature diff [<name|nameprefix>]"
@@ -195,6 +195,8 @@ parse_remote_name() {
 
 cmd_start() {
 	DEFINE_boolean fetch false 'fetch from origin before performing local operation' F
+        DEFINE_boolean no_maven false "Don't use mvn versions:set even if pom.xml exists" M
+
 	parse_args "$@"
 	BASE=${2:-$DEVELOP_BRANCH}
 	require_name_arg
@@ -218,6 +220,13 @@ cmd_start() {
 		die "Could not create feature branch '$BRANCH'"
 	fi
 
+	if ! flag no_maven ; then
+		if [ -f pom.xml ]; then
+			mvn versions:set -DnewVersion=feature-$NAME-SNAPSHOT -DgenerateBackupPoms=false
+			git commit -am "Began working on feature $NAME"
+		fi
+	fi
+	
 	echo
 	echo "Summary of actions:"
 	echo "- A new branch '$BRANCH' was created, based on '$BASE'"
@@ -235,6 +244,8 @@ cmd_finish() {
 	DEFINE_boolean keep false "keep branch after performing finish" k
 	DEFINE_boolean force_delete false "force delete feature branch after finish" D
 	DEFINE_boolean squash false "squash feature during merge" S
+	DEFINE_boolean no_maven false "Don't use mvn versions:set even if pom.xml exists" M
+
 	parse_args "$@"
 	expand_nameprefix_arg_or_current
 
@@ -298,6 +309,14 @@ cmd_finish() {
 	if has "$ORIGIN/$DEVELOP_BRANCH" $(git_remote_branches); then
 		require_branches_equal "$DEVELOP_BRANCH" "$ORIGIN/$DEVELOP_BRANCH"
 	fi
+
+        if ! flag no_maven ; then
+                if [ -f pom.xml ]; then
+	                mvn versions:set -DnewVersion=develop-SNAPSHOT -DgenerateBackupPoms=false
+        	        git commit -am "Completing feature $BRANCH" 
+		fi
+        fi
+
 
 	# if the user wants to rebase, do that first
 	if flag rebase; then

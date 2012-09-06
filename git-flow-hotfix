@@ -47,7 +47,7 @@ init() {
 usage() {
 	echo "usage: git flow hotfix [list] [-v]"
 	echo "       git flow hotfix start [-F] <version> [<base>]"
-	echo "       git flow hotfix finish [-Fsumpk] <version>"
+	echo "       git flow hotfix finish [-FMsumpk] <version>"
 	echo "       git flow hotfix publish <version>"
 	echo "       git flow hotfix track <version>"
 }
@@ -248,6 +248,8 @@ cmd_finish() {
 	DEFINE_boolean push false "push to $ORIGIN after performing finish" p
 	DEFINE_boolean keep false "keep branch after performing finish" k
 	DEFINE_boolean notag false "don't tag this release" n
+	DEFINE_boolean no_maven false "Don't use mvn versions:set even if pom.xml exists" M
+
 	parse_args "$@"
 	require_version_arg
 
@@ -303,8 +305,19 @@ cmd_finish() {
 	# in case a previous attempt to finish this release branch has failed,
 	# but the merge into develop was successful, we skip it now
 	if ! git_is_branch_merged_into "$BRANCH" "$DEVELOP_BRANCH"; then
+		if ! flag no_maven ; then
+               		if [ -f pom.xml ]; then
+				git checkout "$BRANCH"
+				git status
+                	      	mvn versions:set -DnewVersion=develop-SNAPSHOT -DgenerateBackupPoms=false
+                      		git commit -am "Changing version to develop-SNAPSHOT to ease merging"
+                	fi
+        	fi
+
 		git checkout "$DEVELOP_BRANCH" || \
 		  die "Could not check out $DEVELOP_BRANCH."
+
+
 
 		# TODO: Actually, accounting for 'git describe' pays, so we should
 		# ideally git merge --no-ff $tagname here, instead!
