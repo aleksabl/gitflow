@@ -247,7 +247,7 @@ cmd_finish() {
 	DEFINE_string messagefile "" "use the contents of the given file as tag message" f
 	DEFINE_boolean push false "push to $ORIGIN after performing finish" p
 	DEFINE_boolean keep false "keep branch after performing finish" k
-	DEFINE_boolean notag false "don't tag this release" n
+	DEFINE_boolean notag true "don't tag this release" n
 	DEFINE_boolean no_maven false "Don't use mvn versions:set even if pom.xml exists" M
 
 	parse_args "$@"
