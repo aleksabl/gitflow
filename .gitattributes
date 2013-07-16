@@ -1,0 +1,10 @@
+# Default behaviour, in case users don't have core.autocrlf set
+*		text=auto
+
+# shell scripts must always use lf
+*.sh	text	eol=lf
+hooks/* text eol=lf
+git-* text eol=lf
+gitflow* text eol.lf
+
+*.cmd text eol=crlf
